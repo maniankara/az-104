@@ -1,0 +1,543 @@
+Availability set: Same software VMs which are not upgraded at the same time during DC upgrade
+Fault domain: Logical group of hardwares which share same power source and network switch
+Update domain: Logical group of hardwares which can undergo maintenance at the same time. (E.g. fd1, fd3, fd5)
+Failover across locations:
+    - Azure site recovery
+Azure backup:
+    - Azure vault
+Region pairs: pairs in same Region but separated 300miles. E.g. WestUS + EastUS etc.
+Composite SLAs: 99.99 x 99.95 = 99.94
+
+
+--------------------------------------------
+                UDEMY
+
+Section 4: Manage subscription and governance
+    - Terms:
+        - Account           - ID (user/app)
+        - Tenant            - Organisation (+ instance of AD)
+        - Subscription      - Billing (Tenants can have 0 or multiple subscriptions)
+        - Resource          - Object/Sub-resource (VM, publicIP etc.), is attached to only 1 Resource group
+        - Resource group    - Resource folder (bulk deletion/granual control etc.)
+    - Azure policy:
+        - Enforce standards+SLAs
+        - Built-in: Allowed VMs, Allowed locations, Allowed Resource type etc.
+        - Can go granual until Resource
+        - Can Audit (log/compliance report), Enforce (prevent), Deploy (threat detection enabled), Require (SQL version X)
+        - Custom policy
+    - Subscriptions and Management groups:
+        - An account can have multiple subscriptions, add multiple users and azure policies: gets messy -> Management group
+        - Management group:
+            - can manage subscriptions
+            - Hold multiple subscriptions and assign granular permissions
+            - Hold heirarchical Management groups (departments in a company/cost center)
+            - Similar to resource group but for subscriptions
+            - Do not have to fiddle with the permissions of Subscriptions
+
+Section 5: Monitor resources using Azure Monitor (* 2 ways of creating alerts)
+    - Diagnostics:
+        - Virtual machines -> Vm -> Diagnostics setting -> Overview, metrics, syslog, Agent
+        - Monitoring -> Virtual machines -> Performance (all vms?)
+    - Baseline environment:
+        - Resource Groups -> az-104 -> Export Templates -> template, parameters
+        - Templates -> az-104-rp-template -> JSON
+    *- Create alerts:
+        - Resource -> Alerts -> new alert -> scope, condition, action group
+        - Alerts -> list, manage rules
+    - Create metrics:
+        - Monitor -> metrics -> Select resource -> graph
+        - Not persistent as default
+    - Action group:
+        - can define multiple actions in action group (email, call function etc.)
+        - any condition can trigger any action group (re-usable)
+    - Manage costs:
+        - Subscriptions -> Free-Trial -> Cost management (create a budget etc.) => per subscription
+        - Cost management+Billing -> Cost management                            => Over all
+    *- Log analytics:
+        - Log analytics workspaces -> VM (attach) 
+                                    -> Logs -> new query -> Alerts
+                        
+Section 6: Manage resource group:
+    - Resource groups and Resource group locks:
+        - Create a sample resource group
+        - Create a read-only lock to the resource group
+    - Resource group policies:
+        - Resource group -> policies -> assignments -> Allowed locations
+    - Move resources:
+        - Resources inside resource group can be moved to another resource group or subscription
+        - Feature register: ManageResourcesMove should be done to namespace: Microsoft.Compute
+
+Section 7: Create and configure storage:
+    - Create storage account:
+    - Virtual network and firewalls:
+        - Defining the scope of storage w.r.t.:
+            - network
+            - tier etc.
+    - Access keys and Shared Access Signature:
+        - Access keys (2) are master keys
+        - Shared access Signature is a token which can contain time-duration+limit access (R/W) etc.
+    - Storage:
+        - Containers -> file: 
+            - Containers can define access scope too (public/private etc.)
+            - If the storage account is in a different network, then we get error for white-listing
+            - Storage explorer: built-in and clients for windows, mac and linux
+    - Log analytics:
+        - Storage account   -> Diagnostics - more of settings
+                            -> Metrics - graphs
+                            -> Alerts -
+                            -> insights - collaged extensive graphs
+    - Redundant storage:
+        - Local Redundant storage (LRS) vs
+        - Geo Redundant Storage (GRS) - map, explicit Failover to secondary
+    - RBAC for storage:
+        - Storage -> IAM -> owner/contributor/reader/...
+        - The scope is restricted to only that storage
+    - AzCopy:
+        - A client to upload/download/server copy etc.
+        - SAS tokens can be passed from cli. SAS tokens can be assigned to file/blog level
+        - MacOS cli didnt work
+    - Access tiers:
+        - cold/hot/archive/premium
+        - pricing: faster vs. cost per GB
+    - Life Cycle management:
+        - Move data from hot -> cold -> archive based on days (patterns if ncessary)
+    - IAM:
+        - Select the role and assign to a resource
+Section 8: Import and export data:
+    - Moving large files:
+        - Shipping hard disks through fedEx (import and export)
+    - Blog storage accounts:
+        - For storing static files for websites etc. for anonymous access.
+    - CDNs:
+        - CDN profile -> new
+        - Map blogstorage <-> CDN
+
+Section 9: Configure Azure files:
+    - Azure file share:
+        - SMB mount, create, copy commands and run
+    - Azure sync group:
+        - Dropbox like agent to sync to File share.
+        - E.g. multiple sync agent(computers) can be configured to a group (one file share)
+    - Troubleshooting Azure file sync:
+        - DO NOT remove endpoint if there are issues with file sync !
+
+Section 10: Implement backup and recovery:
+    - Azure backups:
+        - Region specific
+        - Recovery services valut:  -> backup: normal backup
+                                    -> site recovery: disaster recovery
+        - Backup:
+            - associate storage account -> Choose what to backup (file share) -> back up policy
+    - OnPrem Backups:
+        - files/folders: Agent installation
+        - Hyper-V, SQL Server: Dedicated server software
+    - Backups reports:
+        - Can be streamed, copied to storage account or analytics (power BI)
+        - One needs to select what type of log/category that needs to be reported.
+    - Soft delete:
+        - Data stored for 14 days by default after deletion, can be restored by undelete()
+        - Auto deleted 15th day
+    - (*)Azure site recovery:
+        - Creates a stand-by setup for a given recovery
+        - Set up recovery: E.g. VM -> disaster recovery (Operations) -> start replication
+        - Disks (costs) and network interface are created ahead
+    - (*) Azure site recovery test:
+        - disaster recovery (Operations)    -> Failover (breaks replication and origin)
+                                            -> Test Failover (Just creates the necessary resources)
+                                            -> Clean up test Failover (Cleans up the resources from Test failover)
+
+Section 11: Azure virtual machines
+    - Create a vm:
+        - review the attributes while creating
+    - Connecting to a VM:
+        - Download RDP file etc.
+    - VM Availability:
+        - At the creation of the VM
+        - Availability options:
+            - No Availability - 99.9%
+            - Availability zones:
+                - You explicitly select the domain
+            - Availability set:
+                - more than 2 machines
+    Availability set - more than 2 machines: 99.95% available
+    Fault domains - power supply
+    Update domains - system upgrades
+    Note: Microsoft automatically assigns Virtual Machines across 2 fault domains (physical servers) and 5 update domains to minimize uptime during planned and unplanned outages by default. 
+    The maximum number of FD is 3 and the maximum number of UD is 20.
+    - VM Monitoring:
+        - One place: Within the VM
+        - Diagnostics: enable: captures data from VM to (new)storageaccount
+        - Can be seen from Insights
+    - VM Custom script extension:
+        - Extensions: Already existing ones: remote power shell
+        - On a running VM: run command
+    - Azure Bastion service:
+        - Ways to connect to a VM securely without needing to RDP, SSH or publicIP in VM
+    - VM scale sets(VMSS):
+        - Places multiple VMs under LB
+        - Can select Availability zones but not Availability sets
+        - Scaling: manual or CPU based (scale set)
+        - Management: Diagnostics, upgrades etc.
+        - Health: Probes, also repair (restart unhealthy nodes)
+        - Placement groups for more than 100 upto 1000 scale set
+    Scale set - a set which scales
+    Placement group - Places the VM closer by
+    - VM powershell:
+        - Create a resource group with: New-AzResourceGroup ...
+        - Create a VM with: New-AzVM ...
+        - Start or Stop a VM with: Start-AzVM, Stop-AzVM
+
+Section: 12 - ARM Templates (git@github.com:maniankara/ARMDeploy.git, az104 branch)
+    - Modify existing ARM templates
+        - Download from deployment: template.json, parameters.json, .rb, .ps1, .cs, .sh
+        - Template has structure and Parameter has values
+        - Template:
+            - Output section returns the name back
+            - Resources section: type, name, dependsOn, etc.
+            - Deploy a VM with old template+values but with new name, public-ip and nic
+            - Deploy it from powershell (can also cloudshell)
+    - Deploy Linux VM using ARM templates
+        - List the vm images: az vm image list --output table
+        - Modify the parameters.json accordingly
+    - Custom script extensions using ARM template
+        - Azure Quickstart templates: https://github.com/Azure/azure-quickstart-templates/blob/master/201-customscript-extension-public-storage-on-ubuntu/azuredeploy.json (/installcustomscript)
+    - ARM using VDH
+        - To start a VM from existing HardDrive (startup)
+        - Azure Quickstart templates: https://github.com/Azure/azure-quickstart-templates/blob/master/201-vm-specialized-vhd-new-or-existing-vnet/azuredeploy.json (VHDURI)
+
+Section - 13: Manage Azure VM
+    - Add Data disks to a VM
+    - Adding network interface (NIC) to VM
+        - Stop the VM
+        - Create a new subnet (within the virtual network range)
+        - Attach (after creating) a new network interface with the new subnet
+        - New IP(s) and Network security group created and assigned
+    - Change VM size
+        - Server restarts
+    - Redeploy a VM
+Note: Redeploying your virtual machine will migrate it to a new Azure host. 
+The virtual machine will be restarted and you will lose any data on the temporary drive.
+E.g.  To avoid the maintenance, you want to move the Virtual machine to a different host immediately.
+        - set-azVM -Redeploy will redeploy the same VM in the same Resource group
+        - Its also possible to 'Move' a VM
+
+Section - 14: Manage VM backups
+    - Introduction to VM backups
+        - Create Services Vault
+        - Create backup policy
+    - VM backup jobs and restores
+        - Backup now took 5.5 hours (first backup)
+        - Restore:
+            - Can be performed to a fresh VM OR
+            - Can be performed on the same VMs OR
+            - To storageaccount disks
+
+Section - 15: Azure APP services (webapp)
+    - Introduction
+        - WebApp, Mobile app, APIapp etc.
+        - All ready to deploy your code
+    - App service plans
+        - Collection/Holder of web apps
+        - Payment happens to App service plans but not to Webapps
+    - Webapps
+        - OS specific apps vs. OS inspecific apps
+        - Deploy DOT NET CORE
+    - Webapps settings
+        - Stop/start, public uri
+        - Similar configuration for deploying IIS
+    - Scaling Webapps
+        - Two types:
+            - Scale Up/Down
+            - Scale out/in
+            - manual/autoscaling(S/P plans only)
+
+Section - 16: Azure kubernetes services
+    - Introduction:
+        - WebApp (select Containers), Container instances, VM and install Container, service fabric (Usoft's k8s like)
+    - Create an AKS cluster
+        - Azure Container Instances (burstable, quick scaling)
+    - kubectl
+        - Azure cli bash
+    - Deploy a container to AKS
+        - Install a voting app
+    - 
+    - Intalling docker hub or toolbox
+        - Docker hub - native solution
+        - Docker for windows (legacy by docker.io) OR
+        - Virtualisation (Virtual box)
+    - Azure container instances
+        - Fastest way - 37 seconds
+
+Section - 17: Manage virtual networking
+    - Virtual network
+        - Create a simple one with 2 subnets
+    - Public IP address
+        - Get one with a name
+    - Network routing
+        - IP based (CIDR), can be routed through a firewall
+    - VPNs and Express route
+        - Azure Private Network, VPN
+            - Peer-2-site
+            - Site-2-site
+        - Express route
+            - Dedicated connection via service provider
+            - Expensive
+    - Express route direct
+        - Done through microsoft with multiple virtual connect (5Gbps=2+2+1Gbps)
+    - Create Azure firewall
+Note: Layers of security:
+            - Network security group - block/Allow
+            - App load balancer - block/Allow
+            - Firewall - block/allow/redirect
+    - Configure firewall
+        - Create firewall with new resource group, publicIP, virtual network
+        - Create a VM in another virtual network
+        - Route table: Connect them both, all outgoing connections from VM pass through firewall
+        - Add firewall routes to allow only microsoft website, RDP
+        - Connect to VM and check
+        - pic: https://ibb.co/bPw23yf
+    - Virtual WLAN
+        - arch: https://docs.microsoft.com/en-us/azure/virtual-wan/virtual-wan-site-to-site-portal
+        - On prem-On prem via Azure 
+        - Create a WAN
+        - Create a Hub
+
+Section - 18: Implement and manage virtual networking
+    - Introduction to VNET peering
+        - Connect two virtual network via peering
+        - Possiblilty to allow connections based on directions
+    - Configure global peering
+        - Forward traffic through
+        - Zone 1,2,3 etc. : Global peering: charges for inbound and outbound: $0.125/GB approx.
+    - Azure-Azure virtual network gateway
+        - Alternative for peering done at subnet level (gateway subnet)
+        - Inbound: free, outboud: ~$0.035/GB but vpnGw1 device is paid (~$135/month)
+        - Virtual network gateway: Created as a separate entity and attached with virtual networks
+    - Adding a network gateway connection
+        - Created network gateways
+        - Attached the gateway subnet?
+        - Advantages:
+            - Scalable solution (choose VpnGateway1/2/3 etc.)
+            - Allows encrypted connections
+        - Outcome: Unable to ping due to Vnet-Vnet status: not connected
+
+Section - 19: Configuring Name resolution
+    - Azure DNS
+        - Default DNS, Corporate DNS and Private DNS
+        - Azure private DNS:
+            - dev.local, production.local (format label.label)
+    - Create a private DNS zone
+        - New-NetFirewallRule -DisplayName "Allow ICMPv4-In" -Protocol ICMPV4
+        - Private DNS: Created as separate entity and attached to virtual networks
+        - Does not work across multiple virtual networks (atleast IP conflicts)
+    - Create a public DNS zone
+        - Public DNS: create as a separate entity
+        - Look for the nameservers and add it to the hosting provider
+        - Allow some time for DNS cache clearing
+        - Create a vm and install IIS and copy the public IP
+        - Add the public IP as A-record to the public domain
+        - Open ports (atleast 80) in network security group
+
+Section - 20: Secure access to virtual networks
+    - Network Security Group (NSG)
+        - VirtualNetwork -= Subnet -= Network interface (VM)
+        - NSG cna be attached to Subnet or Network interface
+        - Inbound and Outboud rules
+    - Implement NSG rules
+        - Replace existing NSG with old one for a VM
+
+Section - 21: Manage Azure active directory
+    - Azure AD basic vs premium
+        - Must know what benefits are there for upgrades
+    - Create Azure AD
+        - Create a free Azure Active Directory
+        - Add or remove users and groups
+    - Add custom (public) domains
+        - something@gmail.com does not work
+        - Any custom domain must be first verified via a TXT record in advance DNS
+    - Trial upgrade to premium P2
+    - Azure AD Join
+        - Cloud first
+        - Can sync with on-prem AD, e.g. non-HQ location users can login directly to Azure AD
+    - AD identity protection
+        - Sign-in risk policy
+            - Select the users
+            - Define condition (high, medium, low)
+            - Define action (allow,+mfa,block)
+            - See current
+            - See weekly
+        - User risk policy
+            - Same
+    - Conditional access
+        - Similar to AD identity protection
+        - two parts:
+            - assignments
+                - user selection
+                - app selection
+                - condition selection
+            - access controls
+                - Grant controls
+                - Session controls
+    - Access reviews
+        - reviewing the access rights
+        - Need a P2 subscription
+        - Select, configure and apply to group/app level
+        - Set frequency of review, default options if not reviewed etc.
+    - Managing multiple AD
+        - Account vs Tenant vs Subscription
+Public DNS - creates also tenants (as it created AD)
+        - Switch to anooptuxera.club tenant: Azure active directory (pyramid)
+        - Tenants does not need a subscription or can have multiple subscription
+
+Section - 22: Manage Azure AD Objects
+    - Manage users and groups
+        - Add user with the current and invite user with guest domains
+        - Add group with explicit or query based members
+    - Manage devices
+        - For windows computers you can add this domain with just email/password
+        - After which the settings specific to that device is available
+        - Device settings are also available (for all devices)
+    - Bulk Operations
+        - Add users from file
+        - Also bulk delete and download is available
+
+Section - 23: Hybrid identity - skip
+
+Section - 24: Implement MFA
+    - Azure AD MFA
+        - Only possible for Azure AD users (not external users)
+    - Azure AD conditional access
+        - AD->security->conditional access
+        - policies: Access from outside (include all but exclude locations)
+        - Named locations: Home (include IPs)
+    - Configuring fraud alerts
+        - AD->security->MFA->Fraud alerts/block-unblock users
+    - MFA one-time bypass
+        - AD->security->MFA->one-time bypass
+        - Lost phone case etc. - Fixed seconds
+    - AAD MFA verfication methods
+        - Two types of MFA servers
+            - Cloud based (default)
+            - Server based (download and install software)
+        - Similar to conditional access, there are also skip/trusted IPs at MFA portal
+
+Section - 25: Manage RBAC
+    - RBAC Overview
+        - Can be assigned at Subscription, Resource group or even at resource level (IAM tab)
+        - Possiblilty to perform check-access at the tab (effetive access)
+        - Owner, contributor, reader (high-low)
+    - Creating custom RBAC
+        - Only possible in Azure cli
+        - Works: export to json, modify and import json
+
+Section - 26: Configure load balancing
+    - Introduction to load balancing
+        - standard vs. basic
+        - create one
+    - Setup load balancer
+        - Load balancer backend pools
+        - Load balancer rules
+    - FrontEnd IP configuration
+        - Add a new FE IP
+        - Add a new rule
+        - use the same backend with different port
+        - Same LB, same backend pools but different rules and ports (applications)
+    - Create a test env quickly using github
+        - https://github.com/Azure/azure-quickstart-templates
+    - Troubleshooting LB
+        - Check all the phases
+        - HttpRules: Ensure the correct pool(s)
+        - In bound NAT rules: For directing to individual hosts in pool
+        - Create alerts
+    - Create application gateway
+        - Layer 7 LB (URL based not IP)
+        - Tier support: 
+        - autoscaling: 
+        - Availability Zone: support
+        - Backend pool: Support for AppServices, VM ScaleSet, VM or IP
+        - Routing rules: FE<->BE
+
+Section - 27: Networking
+    - Network Performance Monitor
+        - Needs OMS workspace
+        - Three:
+            - Performance Monitor: TCP, ICMP
+            - Service connectivity: Office 365 etc.
+            - Express route: 
+            = All of the above has a dedicated agent
+    - Network Watcher
+        - IP flow verify:
+            - Check if TCP/UDP packets can traverse inbound/outbound to a VM.
+                If blocked, then then tell which NSG blocks
+        - Package capture:
+            - capture all packets flowing into/out bound VM to storage account
+        - NSG flow logs:
+            - Network security group (NSG) flow logs allows you to view information about ingress and egress IP traffic through a Network security groups
+
+References:
+    - Resource group:
+        - Move to readOnly RG allowed: https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/lock-resources
+        - Move from readOnly is NOT allowed
+        - WebApp are moveable across regions/subscriptions
+    - Networking:
+        - vnet: https://docs.microsoft.com/en-gb/azure/virtual-network/virtual-network-network-interface
+        - Availability set (99.95..%) vs Availability Zones (99.99%) (3 zones, 2 always available)
+        - CDN:
+            - profile -> Endpoint host name (ur actual site) <-associate-> origin hostname (storage account url hosting img) 
+        - Troubleshooting:
+            - network Latencies/bandwidth, VM and endpoint connections - Connection monitor
+            - A packet is allowed/denied - IP flow
+            - NSG rules - NSG flow
+            - VM routing - next hop
+            - Outbound VM communication - Connection Troubleshoot
+            - VPN Troubleshoot - VPN Diagnostics
+            - All network traffic to/from VM - variable packet capture
+        - VPN:
+            - Site2Site: Azure (virtual gateway (vnet), local network gateway (onPrem vnet details)) <-> OnPrem
+                - Local network gateway: IP address -> VPN gateway address, IP address range -> CIDR block of onPrem address range
+            - Point/Site to Site VPN: https://docs.microsoft.com/en-us/azure/vpn-gateway/point-to-site-about
+                - Check for space for gateway subnet in site2site VPN
+    - Backup and recovery:
+        - Blobs cannot be backed up: https://docs.microsoft.com/en-gb/azure/backup/backup-azure-recovery-services-vault-overview
+        - Blobs: Object storage (unstructured), File storage: files (structured)
+        - FAQS: https://docs.microsoft.com/en-us/azure/backup/backup-azure-backup-faq
+        - https://docs.microsoft.com/en-us/azure/backup/backup-azure-files-faq
+    - AD:
+        - https://docs.microsoft.com/en-us/azure/active-directory/devices/assign-local-admin (Considerations)
+        - Admin password reset: https://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-sspr-policy
+        - Dynamic group (is immutable): https://docs.microsoft.com/en-us/azure/active-directory/users-groups-roles/groups-create-rule
+        - AD sync (turn off staging): https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-sync-staging-server
+            Hybrid identity:
+                - AD seamless SSO: signs users in when they are on their corporate devices connected to your corporate network.
+                - AD connect:
+                    - password hash sync: onPrem-AD -> Azure AD (AD password sync)
+                    - Pass through: \o/ -> (OnPrem cred.) Azure AD -> OnPrem AD
+                    - Federated AD: OnPrem AD+ Azure AD
+                - AD connect more:
+                    - user roles: Azure AD (Azure AD Global Administrator) <-> Enterprise Administrator
+                    - Also for rollout: https://autologon.microsoftazuread-sso.com
+        - AD previledged identity management (PIM): Approval of role changes. Cannot manage classic admin roles: Account admin, Co-Admin, service Amdin
+    - Storage:
+        - File sync: https://docs.microsoft.com/en-us/azure/storage/files/storage-sync-files-deployment-guide?tabs=azure-portal%2Cproactive-portal
+        - File sync (sync service, sync group)+fileshare: One endpoint in one path only, another not possible
+        - Types: V2/V1/BlockBlob/Blob   Tiers: Hot/cold/archive  ALWAYS PREFER: V2
+        - Log analytics: can be in any region
+        - Replciates synchronously: Zone Redundant storage (ZRS)
+        - GeoReduandantStorage: primary endpoint (secondary is available only on failover), ReadAccess-GRS: both endpoints 
+        - Disks:
+            Standard HDD: 2,000IOPS, Standard SSD: 6,000IOPS, premium SSD: 20,000IOPS
+        - Azure DSC: Desired state configuration
+    - Application
+        - Application insights:
+            - funnel, cohort, impacts, retention, user flows: https://docs.microsoft.com/en-us/azure/azure-monitor/app/usage-funnels
+        - Log analytics:
+            - Query keywords: https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/tutorial?pivots=azuremonitor
+            - where, project, take/top/sort, extend, summarize (group by), bin (distinct), 
+        - .Net Core: windows+linux, ASP .NET: windows only
+    - LB
+        - Standard (same network: any vms) vs Basic (only availablity sets/scale sets)
+        - Application gateway/SQL injection (WAF): https://docs.microsoft.com/en-us/azure/web-application-firewall/ag/ag-overview
+    - IAM
+        - Roles: https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+            - Manage == contributor: Full access, POSIX == Owner: Read access
+            - Storage Account contributor (only access data) vs. Storage blob data contributor (read/write/delete containers/blobs)
